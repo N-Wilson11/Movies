@@ -18,6 +18,7 @@ export default function MovieExplorer() {
   const [heading, setHeading] = useState("Nu in de bioscoop");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [trailerError, setTrailerError] = useState<string | null>(null);
   const [trailer, setTrailer] = useState<{ key: string; title: string } | null>(
     null,
   );
@@ -62,6 +63,7 @@ export default function MovieExplorer() {
 
   async function openTrailer(movie: Movie) {
     setTrailerLoadingId(movie.id);
+    setTrailerError(null);
 
     try {
       const response = await fetch(`/api/movies/${movie.id}/trailer`);
@@ -79,7 +81,7 @@ export default function MovieExplorer() {
 
       setTrailer({ key: data.trailerKey, title: movie.title });
     } catch (trailerError) {
-      setError(
+      setTrailerError(
         trailerError instanceof Error
           ? trailerError.message
           : "Trailer kon niet worden geladen.",
@@ -126,6 +128,8 @@ export default function MovieExplorer() {
             <span className="result-count">{movies.length} films</span>
           )}
         </div>
+
+        {trailerError && <div className="notice trailer-notice">{trailerError}</div>}
 
         {loading ? (
           <div className="notice">Films worden geladen...</div>

@@ -96,22 +96,29 @@ export async function getMovies(query?: string): Promise<Movie[]> {
 }
 
 export async function getTrailerKey(movieId: number): Promise<string | null> {
-  const data = (await tmdbFetch(
-    `/movie/${movieId}/videos?language=nl-NL`,
-  )) as {
+  const getTrailerFromLanguage = async (language: string) => {
+    const data = (await tmdbFetch(
+      `/movie/${movieId}/videos?language=${language}`,
+    )) as {
     results: { key: string; site: string; type: string; official: boolean }[];
-  };
-  const videos = data.results;
-  const trailer =
-    videos.find(
-      (video) =>
-        video.site === "YouTube" &&
-        video.type === "Trailer" &&
-        video.official,
-    ) ??
-    videos.find(
-      (video) => video.site === "YouTube" && video.type === "Trailer",
-    );
+    };
+    const videos = data.results;
+    const trailer =
+      videos.find(
+        (video) =>
+          video.site === "YouTube" &&
+          video.type === "Trailer" &&
+          video.official,
+      ) ??
+      videos.find(
+        (video) => video.site === "YouTube" && video.type === "Trailer",
+      );
 
-  return trailer?.key ?? null;
+    return trailer?.key ?? null;
+  };
+
+  return (
+    (await getTrailerFromLanguage("nl-NL")) ??
+    (await getTrailerFromLanguage("en-US"))
+  );
 }

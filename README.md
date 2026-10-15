@@ -49,3 +49,4 @@ Production, Preview en Development. Vercel detecteert Next.js automatisch; een e
 - Next.js (Node.js) en React
 - TMDB API voor actuele filminformatie
 - YouTube no-cookie embeds voor trailers
+- Installeerbare PWA met FilmFinder-tabblad- en appicoon

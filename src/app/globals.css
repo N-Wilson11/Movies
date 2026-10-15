@@ -303,6 +303,13 @@ h2 {
   color: var(--ink);
 }
 
+.trailer-notice {
+  margin-bottom: 22px;
+  padding: 16px 20px;
+  color: #f3d777;
+  text-align: left;
+}
+
 .modal-backdrop {
   position: fixed;
   z-index: 10;
