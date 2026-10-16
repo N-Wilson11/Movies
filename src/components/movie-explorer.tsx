@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type { Movie } from "@/lib/tmdb";
 
@@ -11,6 +11,85 @@ type MoviesResponse = {
 
 const imageUrl = (path: string | null) =>
   path ? `https://image.tmdb.org/t/p/w500${path}` : null;
+
+const WATCHLIST_KEY = "filmfinder:watchlist";
+
+function isMovie(value: unknown): value is Movie {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const movie = value as Record<string, unknown>;
+
+  return (
+    typeof movie.id === "number" &&
+    typeof movie.title === "string" &&
+    typeof movie.overview === "string" &&
+    (typeof movie.posterPath === "string" || movie.posterPath === null) &&
+    typeof movie.rating === "number" &&
+    typeof movie.releaseDate === "string"
+  );
+}
+
+function MovieCard({
+  movie,
+  onOpenTrailer,
+  onToggleWatchlist,
+  trailerLoading,
+  watchlisted,
+}: {
+  movie: Movie;
+  onOpenTrailer: (movie: Movie) => void;
+  onToggleWatchlist: (movie: Movie) => void;
+  trailerLoading: boolean;
+  watchlisted: boolean;
+}) {
+  const posterUrl = imageUrl(movie.posterPath);
+
+  return (
+    <article className="movie-card">
+      <div className="poster">
+        {posterUrl ? (
+          <Image
+            alt={`Poster van ${movie.title}`}
+            fill
+            sizes="(max-width: 620px) 50vw, (max-width: 900px) 33vw, 25vw"
+            src={posterUrl}
+          />
+        ) : (
+          <span className="no-poster">Geen poster beschikbaar</span>
+        )}
+        <span className="rating">★ {movie.rating.toFixed(1)}</span>
+      </div>
+      <div className="card-body">
+        <h3 className="card-title">{movie.title}</h3>
+        <p className="overview">
+          {movie.overview || "Er is nog geen beschrijving beschikbaar."}
+        </p>
+        <div className="card-actions">
+          <button
+            className="trailer-button"
+            disabled={trailerLoading}
+            onClick={() => onOpenTrailer(movie)}
+          >
+            {trailerLoading ? "Laden..." : "▶ Trailer"}
+          </button>
+          <button
+            aria-label={
+              watchlisted
+                ? `${movie.title} uit watchlist verwijderen`
+                : `${movie.title} aan watchlist toevoegen`
+            }
+            className={`watchlist-button${watchlisted ? " is-saved" : ""}`}
+            onClick={() => onToggleWatchlist(movie)}
+          >
+            {watchlisted ? "✓ Op lijst" : "+ Bewaar"}
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
 
 export default function MovieExplorer() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -23,6 +102,10 @@ export default function MovieExplorer() {
     null,
   );
   const [trailerLoadingId, setTrailerLoadingId] = useState<number | null>(null);
+  const [watchlist, setWatchlist] = useState<Movie[]>([]);
+  const [showingWatchlist, setShowingWatchlist] = useState(false);
+  const [watchlistError, setWatchlistError] = useState<string | null>(null);
+  const watchlistRef = useRef<Movie[]>([]);
 
   async function loadMovies(query = "") {
     setLoading(true);
@@ -54,6 +137,28 @@ export default function MovieExplorer() {
 
   useEffect(() => {
     void Promise.resolve().then(() => loadMovies());
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(() => {
+      try {
+        const saved = window.localStorage.getItem(WATCHLIST_KEY);
+        const storedMovies = saved ? JSON.parse(saved) : [];
+
+        if (!Array.isArray(storedMovies) || !storedMovies.every(isMovie)) {
+          throw new Error("De opgeslagen watchlist heeft een ongeldig formaat.");
+        }
+
+        watchlistRef.current = storedMovies;
+        setWatchlist(storedMovies);
+      } catch (storageError) {
+        setWatchlistError(
+          storageError instanceof Error
+            ? storageError.message
+            : "De opgeslagen watchlist kon niet worden gelezen.",
+        );
+      }
+    });
   }, []);
 
   function handleSearch(event: FormEvent<HTMLFormElement>) {
@@ -91,6 +196,29 @@ export default function MovieExplorer() {
     }
   }
 
+  function toggleWatchlist(movie: Movie) {
+    const currentWatchlist = watchlistRef.current;
+    const isSaved = currentWatchlist.some((savedMovie) => savedMovie.id === movie.id);
+    const nextWatchlist = isSaved
+      ? currentWatchlist.filter((savedMovie) => savedMovie.id !== movie.id)
+      : [...currentWatchlist, movie];
+
+    try {
+      window.localStorage.setItem(WATCHLIST_KEY, JSON.stringify(nextWatchlist));
+      watchlistRef.current = nextWatchlist;
+      setWatchlist(nextWatchlist);
+      setWatchlistError(null);
+    } catch {
+      setWatchlistError(
+        "De watchlist kon niet worden opgeslagen. Controleer de browserinstellingen.",
+      );
+    }
+  }
+
+  function isWatchlisted(movieId: number) {
+    return watchlist.some((movie) => movie.id === movieId);
+  }
+
   return (
     <main className="page-shell">
       <header className="site-header">
@@ -98,7 +226,16 @@ export default function MovieExplorer() {
           <span className="brand-mark">▶</span>
           FilmFinder
         </div>
-        <span className="tagline">Jouw gids voor de nieuwste films</span>
+        <div className="header-actions">
+          <span className="tagline">Jouw gids voor de nieuwste films</span>
+          <button
+            aria-pressed={showingWatchlist}
+            className="header-watchlist"
+            onClick={() => setShowingWatchlist(true)}
+          >
+            ★ Watchlist <span>{watchlist.length}</span>
+          </button>
+        </div>
       </header>
 
       <section className="hero">
@@ -123,15 +260,47 @@ export default function MovieExplorer() {
 
       <section className="catalogue" aria-live="polite">
         <div className="catalogue-heading">
-          <h2>{heading}</h2>
-          {!loading && !error && (
-            <span className="result-count">{movies.length} films</span>
+          <h2>{showingWatchlist ? "Mijn watchlist" : heading}</h2>
+          {showingWatchlist ? (
+            <button
+              className="close-watchlist"
+              onClick={() => setShowingWatchlist(false)}
+            >
+              Terug naar films
+            </button>
+          ) : (
+            !loading &&
+            !error && <span className="result-count">{movies.length} films</span>
           )}
         </div>
 
-        {trailerError && <div className="notice trailer-notice">{trailerError}</div>}
-
-        {loading ? (
+        {trailerError && (
+          <div className="notice trailer-notice">{trailerError}</div>
+        )}
+        {showingWatchlist && watchlistError && (
+          <div className="notice trailer-notice">{watchlistError}</div>
+        )}
+        {showingWatchlist ? (
+          watchlist.length === 0 ? (
+            <div className="notice">
+              <strong>Je watchlist is nog leeg.</strong>
+              Bewaar een film om hem hier terug te vinden.
+            </div>
+          ) : (
+            <div className="movie-grid">
+              {watchlist.map((movie) => (
+                <MovieCard
+                  key={movie.id}
+                  movie={movie}
+                  onOpenTrailer={(selectedMovie) => void openTrailer(selectedMovie)}
+                  onToggleWatchlist={toggleWatchlist}
+                  trailerLoading={trailerLoadingId === movie.id}
+                  watchlisted
+                />
+              ))}
+            </div>
+          )
+        ) : loading ? (
           <div className="notice">Films worden geladen...</div>
         ) : error ? (
           <div className="notice">
@@ -145,42 +314,16 @@ export default function MovieExplorer() {
           </div>
         ) : (
           <div className="movie-grid">
-            {movies.map((movie) => {
-              const posterUrl = imageUrl(movie.posterPath);
-
-              return (
-                <article className="movie-card" key={movie.id}>
-                  <div className="poster">
-                    {posterUrl ? (
-                      <Image
-                        alt={`Poster van ${movie.title}`}
-                        fill
-                        sizes="(max-width: 620px) 50vw, (max-width: 900px) 33vw, 25vw"
-                        src={posterUrl}
-                      />
-                    ) : (
-                      <span className="no-poster">Geen poster beschikbaar</span>
-                    )}
-                    <span className="rating">★ {movie.rating.toFixed(1)}</span>
-                  </div>
-                  <div className="card-body">
-                    <h3 className="card-title">{movie.title}</h3>
-                    <p className="overview">
-                      {movie.overview || "Er is nog geen beschrijving beschikbaar."}
-                    </p>
-                    <button
-                      className="trailer-button"
-                      disabled={trailerLoadingId === movie.id}
-                      onClick={() => void openTrailer(movie)}
-                    >
-                      {trailerLoadingId === movie.id
-                        ? "Trailer laden..."
-                        : "▶ Trailer bekijken"}
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
+            {movies.map((movie) => (
+              <MovieCard
+                key={movie.id}
+                movie={movie}
+                onOpenTrailer={(selectedMovie) => void openTrailer(selectedMovie)}
+                onToggleWatchlist={toggleWatchlist}
+                trailerLoading={trailerLoadingId === movie.id}
+                watchlisted={isWatchlisted(movie.id)}
+              />
+            ))}
           </div>
         )}
       </section>

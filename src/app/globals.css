@@ -76,6 +76,43 @@ button {
   font-size: 0.9rem;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.header-watchlist,
+.close-watchlist {
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.header-watchlist {
+  padding: 9px 11px;
+}
+
+.header-watchlist span {
+  display: inline-grid;
+  width: 19px;
+  height: 19px;
+  margin-left: 4px;
+  place-items: center;
+  color: #16130a;
+  background: var(--accent);
+  border-radius: 50%;
+  font-size: 0.7rem;
+}
+
+.header-watchlist:hover,
+.close-watchlist:hover {
+  border-color: #586782;
+}
+
 .hero {
   max-width: 720px;
   padding: 72px 0 56px;
@@ -267,7 +304,7 @@ h2 {
 }
 
 .trailer-button {
-  width: 100%;
+  flex: 1;
   padding: 10px;
   color: var(--ink);
   background: var(--surface-light);
@@ -276,6 +313,37 @@ h2 {
   font-size: 0.84rem;
   font-weight: 700;
   transition: border-color 150ms ease, background 150ms ease;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.watchlist-button {
+  flex: 1;
+  padding: 10px 8px;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid #48546c;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.watchlist-button:hover,
+.watchlist-button.is-saved {
+  color: #1b1606;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.watchlist {
+  padding-top: 0;
+}
+
+.close-watchlist {
+  padding: 7px 11px;
 }
 
 .trailer-button:hover:not(:disabled) {
@@ -373,6 +441,10 @@ h2 {
 
   .tagline {
     display: none;
+  }
+
+  .header-actions {
+    gap: 0;
   }
 
   .hero {

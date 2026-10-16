@@ -2,7 +2,7 @@
 
 Een Node.js-filmapp die actuele bioscoopfilms uit TMDB toont. Bezoekers kunnen
 zoeken op titel en krijgen de naam, beschrijving, rating en YouTube-trailer te
-zien.
+zien. Een persoonlijke watchlist wordt lokaal in de browser opgeslagen.
 
 ## Lokaal starten
 
@@ -50,3 +50,4 @@ Production, Preview en Development. Vercel detecteert Next.js automatisch; een e
 - TMDB API voor actuele filminformatie
 - YouTube no-cookie embeds voor trailers
 - Installeerbare PWA met FilmFinder-tabblad- en appicoon
+- Lokale watchlist via browseropslag; niet gesynchroniseerd tussen apparaten
