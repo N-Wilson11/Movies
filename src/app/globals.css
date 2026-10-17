@@ -233,6 +233,21 @@ h2 {
   box-shadow: 0 15px 25px rgb(0 0 0 / 10%);
 }
 
+.movie-details-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+}
+
+.movie-details-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
 .poster {
   position: relative;
   display: block;
@@ -277,10 +292,12 @@ h2 {
 }
 
 .card-body {
-  padding: 14px 14px 16px;
+  display: block;
+  padding: 14px 14px 0;
 }
 
 .card-title {
+  display: block;
   overflow: hidden;
   margin: 0;
   color: var(--ink);
@@ -318,6 +335,7 @@ h2 {
 .card-actions {
   display: flex;
   gap: 8px;
+  padding: 0 14px 16px;
 }
 
 .watchlist-button {
@@ -397,6 +415,66 @@ h2 {
   box-shadow: 0 24px 80px rgb(0 0 0 / 50%);
 }
 
+.movie-details-modal {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  width: min(760px, 100%);
+  max-height: min(80vh, 700px);
+  overflow: auto;
+  background: #11151e;
+  border: 1px solid #394258;
+  border-radius: 16px;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 50%);
+}
+
+.details-poster {
+  position: relative;
+  min-height: 400px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #303849, #1d2330);
+}
+
+.details-poster img {
+  object-fit: cover;
+}
+
+.details-content {
+  align-self: center;
+  padding: 36px;
+}
+
+.details-content h2 {
+  padding-right: 18px;
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+}
+
+.details-rating {
+  margin: 16px 0 20px;
+  color: var(--accent);
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.details-rating span {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.details-overview {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.movie-details-close {
+  position: absolute;
+  z-index: 1;
+  top: 12px;
+  right: 12px;
+}
+
 .modal-header {
   display: flex;
   align-items: center;
@@ -460,7 +538,34 @@ h2 {
     gap: 12px;
   }
 
+  .poster img,
+  .details-poster img {
+    object-fit: contain;
+  }
+
+  .movie-card:hover .poster img {
+    transform: none;
+  }
+
   .card-body {
-    padding: 12px;
+    padding: 12px 12px 0;
+  }
+
+  .card-actions {
+    padding: 0 12px 12px;
+  }
+
+  .movie-details-modal {
+    grid-template-columns: minmax(0, 1fr);
+    max-height: 85vh;
+  }
+
+  .details-poster {
+    min-height: 0;
+    height: min(46vh, 360px);
+  }
+
+  .details-content {
+    padding: 24px;
   }
 }

@@ -33,12 +33,14 @@ function isMovie(value: unknown): value is Movie {
 
 function MovieCard({
   movie,
+  onOpenDetails,
   onOpenTrailer,
   onToggleWatchlist,
   trailerLoading,
   watchlisted,
 }: {
   movie: Movie;
+  onOpenDetails: (movie: Movie) => void;
   onOpenTrailer: (movie: Movie) => void;
   onToggleWatchlist: (movie: Movie) => void;
   trailerLoading: boolean;
@@ -48,44 +50,53 @@ function MovieCard({
 
   return (
     <article className="movie-card">
-      <div className="poster">
-        {posterUrl ? (
-          <Image
-            alt={`Poster van ${movie.title}`}
-            fill
-            sizes="(max-width: 620px) 50vw, (max-width: 900px) 33vw, 25vw"
-            src={posterUrl}
-          />
-        ) : (
-          <span className="no-poster">Geen poster beschikbaar</span>
-        )}
-        <span className="rating">★ {movie.rating.toFixed(1)}</span>
-      </div>
-      <div className="card-body">
-        <h3 className="card-title">{movie.title}</h3>
-        <p className="overview">
-          {movie.overview || "Er is nog geen beschrijving beschikbaar."}
-        </p>
-        <div className="card-actions">
-          <button
-            className="trailer-button"
-            disabled={trailerLoading}
-            onClick={() => onOpenTrailer(movie)}
-          >
-            {trailerLoading ? "Laden..." : "▶ Trailer"}
-          </button>
-          <button
-            aria-label={
-              watchlisted
-                ? `${movie.title} uit watchlist verwijderen`
-                : `${movie.title} aan watchlist toevoegen`
-            }
-            className={`watchlist-button${watchlisted ? " is-saved" : ""}`}
-            onClick={() => onToggleWatchlist(movie)}
-          >
-            {watchlisted ? "✓ Op lijst" : "+ Bewaar"}
-          </button>
-        </div>
+      <button
+        aria-label={`Meer informatie over ${movie.title}`}
+        className="movie-details-button"
+        onClick={() => onOpenDetails(movie)}
+        type="button"
+      >
+        <span className="poster">
+          {posterUrl ? (
+            <Image
+              alt={`Poster van ${movie.title}`}
+              fill
+              sizes="(max-width: 620px) 50vw, (max-width: 900px) 33vw, 25vw"
+              src={posterUrl}
+            />
+          ) : (
+            <span className="no-poster">Geen poster beschikbaar</span>
+          )}
+          <span className="rating">★ {movie.rating.toFixed(1)}</span>
+        </span>
+        <span className="card-body">
+          <span aria-level={3} className="card-title" role="heading">
+            {movie.title}
+          </span>
+          <span className="overview">
+            {movie.overview || "Er is nog geen beschrijving beschikbaar."}
+          </span>
+        </span>
+      </button>
+      <div className="card-actions">
+        <button
+          className="trailer-button"
+          disabled={trailerLoading}
+          onClick={() => onOpenTrailer(movie)}
+        >
+          {trailerLoading ? "Laden..." : "▶ Trailer"}
+        </button>
+        <button
+          aria-label={
+            watchlisted
+              ? `${movie.title} uit watchlist verwijderen`
+              : `${movie.title} aan watchlist toevoegen`
+          }
+          className={`watchlist-button${watchlisted ? " is-saved" : ""}`}
+          onClick={() => onToggleWatchlist(movie)}
+        >
+          {watchlisted ? "✓ Op lijst" : "+ Bewaar"}
+        </button>
       </div>
     </article>
   );
@@ -101,11 +112,15 @@ export default function MovieExplorer() {
   const [trailer, setTrailer] = useState<{ key: string; title: string } | null>(
     null,
   );
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [trailerLoadingId, setTrailerLoadingId] = useState<number | null>(null);
   const [watchlist, setWatchlist] = useState<Movie[]>([]);
   const [showingWatchlist, setShowingWatchlist] = useState(false);
   const [watchlistError, setWatchlistError] = useState<string | null>(null);
   const watchlistRef = useRef<Movie[]>([]);
+  const selectedPosterUrl = selectedMovie
+    ? imageUrl(selectedMovie.posterPath)
+    : null;
 
   async function loadMovies(query = "") {
     setLoading(true);
@@ -138,6 +153,22 @@ export default function MovieExplorer() {
   useEffect(() => {
     void Promise.resolve().then(() => loadMovies());
   }, []);
+
+  useEffect(() => {
+    if (!selectedMovie && !trailer) {
+      return;
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setSelectedMovie(null);
+        setTrailer(null);
+      }
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [selectedMovie, trailer]);
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -292,6 +323,7 @@ export default function MovieExplorer() {
                 <MovieCard
                   key={movie.id}
                   movie={movie}
+                  onOpenDetails={setSelectedMovie}
                   onOpenTrailer={(selectedMovie) => void openTrailer(selectedMovie)}
                   onToggleWatchlist={toggleWatchlist}
                   trailerLoading={trailerLoadingId === movie.id}
@@ -318,6 +350,7 @@ export default function MovieExplorer() {
               <MovieCard
                 key={movie.id}
                 movie={movie}
+                onOpenDetails={setSelectedMovie}
                 onOpenTrailer={(selectedMovie) => void openTrailer(selectedMovie)}
                 onToggleWatchlist={toggleWatchlist}
                 trailerLoading={trailerLoadingId === movie.id}
@@ -327,6 +360,57 @@ export default function MovieExplorer() {
           </div>
         )}
       </section>
+
+      {selectedMovie && (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setSelectedMovie(null);
+            }
+          }}
+        >
+          <section
+            aria-labelledby="movie-details-title"
+            aria-modal="true"
+            className="movie-details-modal"
+            role="dialog"
+          >
+            <button
+              aria-label="Sluit filmdetails"
+              className="close-button movie-details-close"
+              onClick={() => setSelectedMovie(null)}
+              type="button"
+            >
+              ×
+            </button>
+            <div className="details-poster">
+              {selectedPosterUrl ? (
+                <Image
+                  alt={`Poster van ${selectedMovie.title}`}
+                  fill
+                  sizes="(max-width: 620px) 40vw, 300px"
+                  src={selectedPosterUrl}
+                />
+              ) : (
+                <span className="no-poster">Geen poster beschikbaar</span>
+              )}
+            </div>
+            <div className="details-content">
+              <p className="eyebrow">Filmdetails</p>
+              <h2 id="movie-details-title">{selectedMovie.title}</h2>
+              <p className="details-rating">
+                ★ {selectedMovie.rating.toFixed(1)} <span>/ 10</span>
+              </p>
+              <p className="details-overview">
+                {selectedMovie.overview ||
+                  "Er is nog geen beschrijving beschikbaar."}
+              </p>
+            </div>
+          </section>
+        </div>
+      )}
 
       {trailer && (
         <div
