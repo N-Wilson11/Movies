@@ -538,6 +538,15 @@ h2 {
     gap: 12px;
   }
 
+  .poster img,
+  .details-poster img {
+    object-fit: contain;
+  }
+
+  .movie-card:hover .poster img {
+    transform: none;
+  }
+
   .card-body {
     padding: 12px 12px 0;
   }
