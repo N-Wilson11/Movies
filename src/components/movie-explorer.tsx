@@ -250,6 +250,15 @@ export default function MovieExplorer() {
     return watchlist.some((movie) => movie.id === movieId);
   }
 
+  function openMovieDetails(movie: Movie) {
+    setSelectedMovie(movie);
+  }
+
+  function cinemaSearchUrl(movie: Movie) {
+    const query = `${movie.title} bioscoop in de buurt`;
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+  }
+
   return (
     <main className="page-shell">
       <header className="site-header">
@@ -323,7 +332,7 @@ export default function MovieExplorer() {
                 <MovieCard
                   key={movie.id}
                   movie={movie}
-                  onOpenDetails={setSelectedMovie}
+                  onOpenDetails={openMovieDetails}
                   onOpenTrailer={(selectedMovie) => void openTrailer(selectedMovie)}
                   onToggleWatchlist={toggleWatchlist}
                   trailerLoading={trailerLoadingId === movie.id}
@@ -350,7 +359,7 @@ export default function MovieExplorer() {
               <MovieCard
                 key={movie.id}
                 movie={movie}
-                onOpenDetails={setSelectedMovie}
+                onOpenDetails={openMovieDetails}
                 onOpenTrailer={(selectedMovie) => void openTrailer(selectedMovie)}
                 onToggleWatchlist={toggleWatchlist}
                 trailerLoading={trailerLoadingId === movie.id}
@@ -407,6 +416,14 @@ export default function MovieExplorer() {
                 {selectedMovie.overview ||
                   "Er is nog geen beschrijving beschikbaar."}
               </p>
+              <a
+                className="cinema-button"
+                href={cinemaSearchUrl(selectedMovie)}
+                rel="noreferrer"
+                target="_blank"
+              >
+                ⌖ Vind bioscopen in de buurt
+              </a>
             </div>
           </section>
         </div>

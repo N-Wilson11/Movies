@@ -468,6 +468,25 @@ h2 {
   line-height: 1.7;
 }
 
+.cinema-button {
+  display: block;
+  width: 100%;
+  margin-top: 24px;
+  padding: 12px 14px;
+  color: #16130a;
+  text-align: center;
+  text-decoration: none;
+  background: var(--accent);
+  border: 0;
+  border-radius: 9px;
+  font-weight: 800;
+  transition: background 150ms ease;
+}
+
+.cinema-button:hover {
+  background: #ffda64;
+}
+
 .movie-details-close {
   position: absolute;
   z-index: 1;
